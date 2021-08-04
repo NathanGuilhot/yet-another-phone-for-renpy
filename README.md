@@ -17,7 +17,7 @@ e_nvl "it's today? {image=emoji/fear.png}"
 
 ## Instructions:
 - Add PhoneTexting.rpy to your project folder
-- Edit th nvl screen in screen.rpy as follow:
+- Edit the nvl screen in screen.rpy as follow:
 ```python
 screen nvl(dialogue, items=None):
 
@@ -37,6 +37,7 @@ screen nvl(dialogue, items=None):
 - To include emojis and pictures, you can simply add use an image tag; make sure they are the right size for the phone screen.
 
 [Mirror download on my website](https://nighten.fr/files/yet_another_phone/)
+
 [Browser demo on *itch.io*](https://nighten.itch.io/yet-another-phone-renpy)
 
 ## Credits:
