@@ -37,6 +37,7 @@ screen nvl(dialogue, items=None):
 - To include emojis and pictures, you can simply add use an image tag; make sure they are the right size for the phone screen.
 
 [Mirror download on my website](https://nighten.fr/files/yet_another_phone/)
+[Browser demo on *itch.io*](https://nighten.itch.io/yet-another-phone-renpy)
 
 ## Credits:
 The background is made by [Uncle Mugen](https://lemmasoft.renai.us/forums/viewtopic.php?t=17302). All the other art assets are done by me, **Nighten**, and free to use in your project if you want (the sources file are available).
