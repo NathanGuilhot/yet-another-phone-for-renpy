@@ -46,7 +46,7 @@ label start:
     e_nvl "{image=EileenSelfieSmall.png}"
     n_nvl e2m1_b "awww, you look fantastic!"
     show nighten e2m2_b
-    e_nvl "A bit low res but hey, the pic have to fit the screen somehow"
+    e_nvl "A bit low res but hey, the pic has to fit the screen somehow"
     
     n_nvl "Thank you Eileen for doing this demo with me!"
     e_nvl "no problem, I hope people will make good use of it!"
