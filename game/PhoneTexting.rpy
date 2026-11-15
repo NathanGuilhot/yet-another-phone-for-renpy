@@ -67,6 +67,8 @@ screen PhoneDialogue(dialogue, items=None):
             vbox:
                 null height 20
                 use nvl_phonetext(dialogue)
+                for i in items or []:
+                    textbutton i.caption action i.action style "phone_choice_button" text_style "phone_choice_text"
                 null height 100
 
 
@@ -167,3 +169,15 @@ style phoneFrame_vbox:
     xfill True
 
 
+style phone_choice_button:
+    xalign 0.5
+    xsize 420
+    padding (20, 15)
+    background Frame("phone_received_frame.png", 23, 23, 23, 23)
+    hover_background Frame("phone_send_frame.png", 23, 23, 23, 23)
+
+style phone_choice_text:
+    xalign 0.5
+    text_align 0.5
+    color "#000"
+    hover_color "#FFF"
