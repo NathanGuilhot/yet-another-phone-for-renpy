@@ -23,6 +23,21 @@ init -1 python:
     def print_bonjour():
         print("bonjour")
 
+    ## The phone screen is shown again when it closes, so remember which
+    ## messages were already animated to not animate them twice
+    def Phone_RememberAnimated(event, **kwargs):
+        if event == "end":
+            store.phone_seen_list = store.nvl_list
+            store.phone_seen_count = len(store.nvl_list or [])
+    config.all_character_callbacks.append(Phone_RememberAnimated)
+
+    def Phone_IsNewMessage():
+        ## "nvl clear" starts a new list, so its messages are new too
+        return store.nvl_list is not store.phone_seen_list or len(store.nvl_list or []) > store.phone_seen_count
+
+default phone_seen_list = None
+default phone_seen_count = 0
+
 
 transform phone_transform(pXalign=0.5, pYalign=0.5):
     xcenter pXalign
@@ -63,7 +78,7 @@ screen PhoneDialogue(dialogue, items=None):
 
     style_prefix "phoneFrame"
     frame at phone_transform(phone_position_x, phone_position_y):
-        if len(dialogue) == 1:
+        if len(dialogue) == 1 and Phone_IsNewMessage():
             at phone_appear(phone_position_x, phone_position_y)
         viewport:
             draggable True
@@ -97,7 +112,7 @@ screen nvl_phonetext(dialogue):
                     size 28
                     slow_cps False
                     id d.what_id
-                    if d.current:
+                    if d.current and Phone_IsNewMessage():
                         at message_narrator
         else:
             $ is_mc = Phone_IsMC(d)
@@ -119,7 +134,7 @@ screen nvl_phonetext(dialogue):
                         $ message_icon = phone_icons.get(d.who, "phone_received_icon.png")
 
                     add message_icon:
-                        if d.current:
+                        if d.current and Phone_IsNewMessage():
                             at message_appear_icon()
                         
                 else:
@@ -137,7 +152,7 @@ screen nvl_phonetext(dialogue):
                         background Frame(message_frame, 23,23,23,23)
                         xsize 350
 
-                        if d.current:
+                        if d.current and Phone_IsNewMessage():
                             if is_mc:
                                 at message_appear(1)
                             else:
