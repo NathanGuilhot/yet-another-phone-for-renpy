@@ -2,17 +2,9 @@
 
 define nvl_mode = "phone"  ##Allow the NVL mode to become a phone conversation
 default MC_Name = "Nighten" ##The name of the main character (or a list of names), used to place them on the screen
-define phone_icons = {} ##Optional per-character icons: {"Displayed name": "image.png"}
+define phone_icons = {} ##Optional icon per character, like {"Eileen": "eileen_icon.png"}
 
 init -1 python:
-    # True if the message d is sent by the main character: name matches MC_Name
-    # (after substitution, so "[player_name]" works), or the Character uses who_style="phone_mc"
-    def phone_is_mc(d):
-        if (d.who_args or {}).get("style") == "phone_mc":
-            return True
-        names = MC_Name if isinstance(MC_Name, (list, tuple)) else [MC_Name]
-        return d.who in [renpy.substitute(n) for n in names]
-
     phone_position_x = 0.3
     phone_position_y = 0.5
 
@@ -22,6 +14,12 @@ init -1 python:
     def Phone_SendSound(event, interact=True, **kwargs):
         if event == "show_done":
             renpy.sound.play("audio/SendText.ogg")
+    def Phone_IsMC(d):
+        if d.who_args.get("style") == "phone_mc":
+            return True
+        names = [MC_Name] if isinstance(MC_Name, str) else MC_Name
+        ## Substitute so names like "[player_name]" match what's shown
+        return d.who in [renpy.substitute(name) for name in names]
     def print_bonjour():
         print("bonjour")
 
@@ -97,7 +95,7 @@ screen nvl_phonetext(dialogue):
                     if d.current:
                         at message_narrator
         else:
-            $ is_mc = phone_is_mc(d)
+            $ is_mc = Phone_IsMC(d)
             if is_mc:
                 $ message_frame = "phone_send_frame.png"
             else:
@@ -158,7 +156,7 @@ screen nvl_phonetext(dialogue):
         $ previous_d_who = d.who
                     
 style phoneFrame is default
-style phone_mc is nvl_label ##Use who_style="phone_mc" on a Character to show it as the main character
+style phone_mc is nvl_label ##Add who_style="phone_mc" to a Character to put it on the main character side
 
 style phoneFrame_frame:
     background Transform("phone_background.png", xcenter=0.5,yalign=0.5)
