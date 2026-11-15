@@ -67,8 +67,11 @@ screen PhoneDialogue(dialogue, items=None):
             vbox:
                 null height 20
                 use nvl_phonetext(dialogue)
-                for i in items or []:
-                    textbutton i.caption action i.action style "phone_choice_button" text_style "phone_choice_text"
+                for i in items:
+                    textbutton i.caption:
+                        action i.action
+                        style "phone_choice_button"
+                        text_style "phone_choice_text"
                 null height 100
 
 
