@@ -16,18 +16,20 @@ init -1 python:
     def print_bonjour():
         print("bonjour")
 
-    # Remember which message already played its appear animation, so that
-    # re-showing the phone (e.g. when it closes) doesn't replay it.
-    def Phone_TrackAnimated(event, **kwargs):
+    ## The phone screen is shown again when it closes, so remember which
+    ## messages were already animated to not animate them twice
+    def Phone_RememberAnimated(event, **kwargs):
         if event == "end":
-            store.phone_animated = (store.nvl_list, len(store.nvl_list or []))
-    config.all_character_callbacks.append(Phone_TrackAnimated)
+            store.phone_seen_list = store.nvl_list
+            store.phone_seen_count = len(store.nvl_list or [])
+    config.all_character_callbacks.append(Phone_RememberAnimated)
 
-    def phone_new_message():
-        seen_list, seen_count = store.phone_animated
-        return seen_list is not store.nvl_list or len(store.nvl_list or []) > seen_count
+    def Phone_IsNewMessage():
+        ## "nvl clear" starts a new list, so its messages are new too
+        return store.nvl_list is not store.phone_seen_list or len(store.nvl_list or []) > store.phone_seen_count
 
-default phone_animated = (None, 0)
+default phone_seen_list = None
+default phone_seen_count = 0
 
 
 transform phone_transform(pXalign=0.5, pYalign=0.5):
@@ -69,7 +71,7 @@ screen PhoneDialogue(dialogue, items=None):
 
     style_prefix "phoneFrame"
     frame at phone_transform(phone_position_x, phone_position_y):
-        if len(dialogue) == 1 and phone_new_message():
+        if len(dialogue) == 1 and Phone_IsNewMessage():
             at phone_appear(phone_position_x, phone_position_y)
         viewport:
             draggable True
@@ -98,7 +100,7 @@ screen nvl_phonetext(dialogue):
                     size 28
                     slow_cps False
                     id d.what_id
-                    if d.current and phone_new_message():
+                    if d.current and Phone_IsNewMessage():
                         at message_narrator
         else:
             if d.who == MC_Name:
@@ -119,7 +121,7 @@ screen nvl_phonetext(dialogue):
                         $ message_icon = "phone_received_icon.png"
 
                     add message_icon:
-                        if d.current and phone_new_message():
+                        if d.current and Phone_IsNewMessage():
                             at message_appear_icon()
                         
                 else:
@@ -137,7 +139,7 @@ screen nvl_phonetext(dialogue):
                         background Frame(message_frame, 23,23,23,23)
                         xsize 350
 
-                        if d.current and phone_new_message():
+                        if d.current and Phone_IsNewMessage():
                             if d.who == MC_Name:
                                 at message_appear(1)
                             else:
