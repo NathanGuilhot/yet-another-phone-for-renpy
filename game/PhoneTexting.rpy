@@ -16,6 +16,19 @@ init -1 python:
     def print_bonjour():
         print("bonjour")
 
+    # Remember which message already played its appear animation, so that
+    # re-showing the phone (e.g. when it closes) doesn't replay it.
+    def Phone_TrackAnimated(event, **kwargs):
+        if event == "end":
+            store.phone_animated = (store.nvl_list, len(store.nvl_list or []))
+    config.all_character_callbacks.append(Phone_TrackAnimated)
+
+    def phone_new_message():
+        seen_list, seen_count = store.phone_animated
+        return seen_list is not store.nvl_list or len(store.nvl_list or []) > seen_count
+
+default phone_animated = (None, 0)
+
 
 transform phone_transform(pXalign=0.5, pYalign=0.5):
     xcenter pXalign
@@ -56,7 +69,7 @@ screen PhoneDialogue(dialogue, items=None):
 
     style_prefix "phoneFrame"
     frame at phone_transform(phone_position_x, phone_position_y):
-        if len(dialogue) == 1:
+        if len(dialogue) == 1 and phone_new_message():
             at phone_appear(phone_position_x, phone_position_y)
         viewport:
             draggable True
@@ -85,7 +98,7 @@ screen nvl_phonetext(dialogue):
                     size 28
                     slow_cps False
                     id d.what_id
-                    if d.current:
+                    if d.current and phone_new_message():
                         at message_narrator
         else:
             if d.who == MC_Name:
@@ -106,7 +119,7 @@ screen nvl_phonetext(dialogue):
                         $ message_icon = "phone_received_icon.png"
 
                     add message_icon:
-                        if d.current:
+                        if d.current and phone_new_message():
                             at message_appear_icon()
                         
                 else:
@@ -124,7 +137,7 @@ screen nvl_phonetext(dialogue):
                         background Frame(message_frame, 23,23,23,23)
                         xsize 350
 
-                        if d.current:
+                        if d.current and phone_new_message():
                             if d.who == MC_Name:
                                 at message_appear(1)
                             else:
