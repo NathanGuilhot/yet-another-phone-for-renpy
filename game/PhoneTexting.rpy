@@ -1,7 +1,8 @@
 # Here's the code for the phone!
 
 define nvl_mode = "phone"  ##Allow the NVL mode to become a phone conversation
-define MC_Name = "Nighten" ##The name of the main character, used to place them on the screen
+default MC_Name = "Nighten" ##The name of the main character (or a list of names), used to place them on the screen
+define phone_icons = {} ##Optional icon per character, like {"Eileen": "eileen_icon.png"}
 
 init -1 python:
     phone_position_x = 0.3
@@ -13,6 +14,12 @@ init -1 python:
     def Phone_SendSound(event, interact=True, **kwargs):
         if event == "show_done":
             renpy.sound.play("audio/SendText.ogg")
+    def Phone_IsMC(d):
+        if d.who_args.get("style") == "phone_mc":
+            return True
+        names = [MC_Name] if isinstance(MC_Name, str) else MC_Name
+        ## Substitute so names like "[player_name]" match what's shown
+        return d.who in [renpy.substitute(name) for name in names]
     def print_bonjour():
         print("bonjour")
 
@@ -82,6 +89,11 @@ screen PhoneDialogue(dialogue, items=None):
             vbox:
                 null height 20
                 use nvl_phonetext(dialogue)
+                for i in items:
+                    textbutton i.caption:
+                        action i.action
+                        style "phone_choice_button"
+                        text_style "phone_choice_text"
                 null height 100
 
 
@@ -103,22 +115,23 @@ screen nvl_phonetext(dialogue):
                     if d.current and Phone_IsNewMessage():
                         at message_narrator
         else:
-            if d.who == MC_Name:
+            $ is_mc = Phone_IsMC(d)
+            if is_mc:
                 $ message_frame = "phone_send_frame.png"
             else:
                 $ message_frame = "phone_received_frame.png"
 
             hbox:
                 spacing 10
-                if d.who == MC_Name:
+                if is_mc:
                     box_reverse True
                 
                 #If this is the first message of the character, show an icon
                 if previous_d_who != d.who:
-                    if d.who == MC_Name:
-                        $ message_icon = "phone_send_icon.png"
+                    if is_mc:
+                        $ message_icon = phone_icons.get(d.who, "phone_send_icon.png")
                     else:
-                        $ message_icon = "phone_received_icon.png"
+                        $ message_icon = phone_icons.get(d.who, "phone_received_icon.png")
 
                     add message_icon:
                         if d.current and Phone_IsNewMessage():
@@ -129,7 +142,7 @@ screen nvl_phonetext(dialogue):
 
                 vbox:
                     yalign 1.0
-                    if d.who != MC_Name and previous_d_who != d.who:
+                    if not is_mc and previous_d_who != d.who:
                         text d.who
 
                     frame:
@@ -140,7 +153,7 @@ screen nvl_phonetext(dialogue):
                         xsize 350
 
                         if d.current and Phone_IsNewMessage():
-                            if d.who == MC_Name:
+                            if is_mc:
                                 at message_appear(1)
                             else:
                                 at message_appear(-1)
@@ -151,7 +164,7 @@ screen nvl_phonetext(dialogue):
                             slow_cps False
                             
 
-                            if d.who == MC_Name :
+                            if is_mc:
                                 color "#FFF"
                                 text_align 1.0
                                 xpos -580
@@ -163,6 +176,7 @@ screen nvl_phonetext(dialogue):
         $ previous_d_who = d.who
                     
 style phoneFrame is default
+style phone_mc is nvl_label ##Add who_style="phone_mc" to a Character to put it on the main character side
 
 style phoneFrame_frame:
     background Transform("phone_background.png", xcenter=0.5,yalign=0.5)
@@ -182,3 +196,15 @@ style phoneFrame_vbox:
     xfill True
 
 
+style phone_choice_button:
+    xalign 0.5
+    xsize 420
+    padding (20, 15)
+    background Frame("phone_received_frame.png", 23, 23, 23, 23)
+    hover_background Frame("phone_send_frame.png", 23, 23, 23, 23)
+
+style phone_choice_text:
+    xalign 0.5
+    text_align 0.5
+    color "#000"
+    hover_color "#FFF"
