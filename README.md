@@ -16,10 +16,11 @@ e_nvl "it's today? {image=emoji/fear.png}"
  a simple phone UI/script for renpy, with a focus on ease of use :)
 
 ## Setup
-1. Copy into your `game/` folder:
+1. First thing firstm you need not only the code but also the assets -- feel free to replace or edit them later.
+Copy into your game/ folder:
    - `PhoneTexting.rpy`
    - `images/phone_background.png`, `phone_foreground.png`, `phone_send_frame.png`, `phone_received_frame.png`, `phone_send_icon.png`, `phone_received_icon.png`
-   - `audio/SendText.ogg`, `audio/ReceiveText.ogg` (only if you use the sound callbacks)
+   - `audio/SendText.ogg`, `audio/ReceiveText.ogg` (only if you use the sound callbacks; those are iphone sounds so I recommend making your own)
 2. In `screens.rpy`, edit the `nvl` screen:
 ```renpy
 screen nvl(dialogue, items=None):
@@ -34,36 +35,37 @@ screen nvl(dialogue, items=None):
             style "nvl_window"
             # ...
 ```
-3. In `gui.rpy`: `define gui.nvl_list_length = None` (keeps every message).
-4. Set your MC's name in `PhoneTexting.rpy`: `default MC_Name = "Nighten"`.
+3. In gui.rpy: `define gui.nvl_list_length = None` (keeps every message)
+4. Set your MC's name in `PhoneTexting.rpy`: `default MC_Name = "Nighten"`
 5. Make `kind=nvl` characters speak:
 ```renpy
-define n_nvl = Character("Nighten", kind=nvl, callback=Phone_SendSound)
+define n_nvl = Character("Nighten", kind=nvl, callback=Phone_SendSound) #Send sounds for the MC, receive sound for the other characters
 define e_nvl = Character("Eileen", kind=nvl, callback=Phone_ReceiveSound)
 ```
-- Emojis and pictures: use an `{image=...}` tag, sized for the phone screen.
-- To get the regular NVL screen back, set `nvl_mode` to anything else (e.g. `"classic"`).
+- Emojis and pictures: use an `{image=...}` tag, sized for the phone screen. Look at the sample conversation to see how to use it.
+- To get the regular NVL screen back, set `nvl_mode` to anything else (e.g. "classic").
 
 ## FAQ
 
-**My MC's messages show on the wrong side / I use a player-entered name.**
-`MC_Name` must match the displayed name. It can be a list, and `[player_name]`-style names work (substituted before comparing):
+**My MC's messages show on the wrong side / I use a player-entered name**
+`MC_Name` must match the displayed name. It can be a list, and you can use a variable like `[player_name]` (renpy takes care of substituting):
 ```renpy
 default MC_Name = ["[player_name]", "Nighten"]
 ```
 Or mark any character as the MC: `Character("[player_name]", kind=nvl, who_style="phone_mc")`.
 
-**Dialogue appears in the normal textbox, not the phone.**
-The character isn't an NVL character. Add `kind=nvl`.
+**Dialogue appears in the normal textbox, not the phone**
+The character probably isn't an NVL character. Add `kind=nvl`
 
-**The phone disappears.**
+**The phone disappears :(**
 Expected: the phone is the NVL screen, so it hides while a normal (ADV) character speaks. It comes back, with its history, on the next NVL line.
 
-**Text is invisible or uses the wrong font.**
-Your game's default text style is leaking in (e.g. white text on a white bubble). Set the phone styles explicitly (next question).
+**Text is invisible or uses the wrong font**
+Your game's default text style is leaking in (like white text on a white bubble for example). Set the phone styles explicitly (-> see next question)
 
 **How do I change fonts, colours, bubble width or background?**
-Text styles: `phone_narrator_text`, `phone_name_text`, `phone_mc_text`, `phone_other_text`. Bubble styles: `phone_mc_bubble`, `phone_other_bubble`.
+We have predefined style you can edit to your need: `phone_narrator_text`, `phone_name_text`, `phone_mc_text`, `phone_other_text`. 
+Bubble styles: `phone_mc_bubble`, `phone_other_bubble`.
 ```renpy
 style phone_mc_text:
     font "myfont.ttf"
@@ -73,19 +75,19 @@ style phone_other_bubble:
     padding (20, 20)
     xsize 400
 ```
-The phone itself is `phone_background.png` / `phone_foreground.png`: replace the images.
+The phone itself is `phone_background.png` / `phone_foreground.png`: replace the images if you need to!
 
 **Per-character avatars?**
-Key by displayed name; anyone missing uses the default icon:
+You can configure this with the `phone_icons` variable; the key is the character displayed name. If the character is not in this variable it uses the default icon:
 ```renpy
 define phone_icons = {"Eileen": "eileen_icon.png"}
 ```
 
 **Choices inside the phone?**
-Use `menu (nvl=True):`. A plain `menu:` shows the normal overlay choice. Style the buttons with `phone_choice_button` / `phone_choice_text`.
+Use `menu (nvl=True):`. If you use a plain `menu:` it will show the normal overlay choice. Style the buttons with `phone_choice_button` / `phone_choice_text`.
 
 **How do I clear messages / have separate conversations?**
-`nvl clear` empties the phone. For a separate history per contact:
+`nvl clear` empties the phone. For a separate history per contact you can hack it this way, but I don't generally recommend:
 ```renpy
 default phone_threads = {}
 init python:
@@ -93,9 +95,6 @@ init python:
         store.nvl_list = store.phone_threads.setdefault(name, [])
 ```
 Call `$ phone_open("Eileen")` before that conversation; call it again after any `nvl clear`.
-
-**Which files do I copy?**
-See [Setup](#setup) step 1. The `gui/phone/` folder is Ren'Py's own mobile GUI, not this phone.
 
 [Mirror download on my website](https://nighten.fr/files/yet_another_phone/)
 
