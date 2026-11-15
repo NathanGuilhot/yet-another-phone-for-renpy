@@ -1,7 +1,8 @@
 # Here's the code for the phone!
 
 define nvl_mode = "phone"  ##Allow the NVL mode to become a phone conversation
-define MC_Name = "Nighten" ##The name of the main character, used to place them on the screen
+default MC_Name = "Nighten" ##The name of the main character (or a list of names), used to place them on the screen
+define phone_icons = {} ##Optional icon per character, like {"Eileen": "eileen_icon.png"}
 
 init -1 python:
     phone_position_x = 0.3
@@ -13,8 +14,29 @@ init -1 python:
     def Phone_SendSound(event, interact=True, **kwargs):
         if event == "show_done":
             renpy.sound.play("audio/SendText.ogg")
+    def Phone_IsMC(d):
+        if d.who_args.get("style") == "phone_mc":
+            return True
+        names = [MC_Name] if isinstance(MC_Name, str) else MC_Name
+        ## Substitute so names like "[player_name]" match what's shown
+        return d.who in [renpy.substitute(name) for name in names]
     def print_bonjour():
         print("bonjour")
+
+    ## The phone screen is shown again when it closes, so remember which
+    ## messages were already animated to not animate them twice
+    def Phone_RememberAnimated(event, **kwargs):
+        if event == "end":
+            store.phone_seen_list = store.nvl_list
+            store.phone_seen_count = len(store.nvl_list or [])
+    config.all_character_callbacks.append(Phone_RememberAnimated)
+
+    def Phone_IsNewMessage():
+        ## "nvl clear" starts a new list, so its messages are new too
+        return store.nvl_list is not store.phone_seen_list or len(store.nvl_list or []) > store.phone_seen_count
+
+default phone_seen_list = None
+default phone_seen_count = 0
 
 
 transform phone_transform(pXalign=0.5, pYalign=0.5):
@@ -56,7 +78,7 @@ screen PhoneDialogue(dialogue, items=None):
 
     style_prefix "phoneFrame"
     frame at phone_transform(phone_position_x, phone_position_y):
-        if len(dialogue) == 1:
+        if len(dialogue) == 1 and Phone_IsNewMessage():
             at phone_appear(phone_position_x, phone_position_y)
         viewport:
             draggable True
@@ -67,6 +89,11 @@ screen PhoneDialogue(dialogue, items=None):
             vbox:
                 null height 20
                 use nvl_phonetext(dialogue)
+                for i in items:
+                    textbutton i.caption:
+                        action i.action
+                        style "phone_choice_button"
+                        text_style "phone_choice_text"
                 null height 100
 
 
@@ -81,10 +108,11 @@ screen nvl_phonetext(dialogue):
                     prefer_screen_to_id True ##Keep the phone style instead of the NVL one
                     slow_cps False
                     id d.what_id
-                    if d.current:
+                    if d.current and Phone_IsNewMessage():
                         at message_narrator
         else:
-            if d.who == MC_Name:
+            $ is_mc = Phone_IsMC(d)
+            if is_mc:
                 $ bubble_style = "phone_mc_bubble"
                 $ text_style = "phone_mc_text"
             else:
@@ -93,18 +121,18 @@ screen nvl_phonetext(dialogue):
 
             hbox:
                 spacing 10
-                if d.who == MC_Name:
+                if is_mc:
                     box_reverse True
                 
                 #If this is the first message of the character, show an icon
                 if previous_d_who != d.who:
-                    if d.who == MC_Name:
-                        $ message_icon = "phone_send_icon.png"
+                    if is_mc:
+                        $ message_icon = phone_icons.get(d.who, "phone_send_icon.png")
                     else:
-                        $ message_icon = "phone_received_icon.png"
+                        $ message_icon = phone_icons.get(d.who, "phone_received_icon.png")
 
                     add message_icon:
-                        if d.current:
+                        if d.current and Phone_IsNewMessage():
                             at message_appear_icon()
                         
                 else:
@@ -112,14 +140,14 @@ screen nvl_phonetext(dialogue):
 
                 vbox:
                     yalign 1.0
-                    if d.who != MC_Name and previous_d_who != d.who:
+                    if not is_mc and previous_d_who != d.who:
                         text d.who style "phone_name_text"
 
                     frame:
                         style bubble_style
 
-                        if d.current:
-                            if d.who == MC_Name:
+                        if d.current and Phone_IsNewMessage():
+                            if is_mc:
                                 at message_appear(1)
                             else:
                                 at message_appear(-1)
@@ -168,6 +196,7 @@ style phone_other_bubble is phone_bubble:
     background Frame("phone_received_frame.png", 23, 23, 23, 23)
 
 style phoneFrame is default
+style phone_mc is nvl_label ##Add who_style="phone_mc" to a Character to put it on the main character side
 
 style phoneFrame_frame:
     background Transform("phone_background.png", xcenter=0.5,yalign=0.5)
@@ -187,3 +216,15 @@ style phoneFrame_vbox:
     xfill True
 
 
+style phone_choice_button:
+    xalign 0.5
+    xsize 420
+    padding (20, 15)
+    background Frame("phone_received_frame.png", 23, 23, 23, 23)
+    hover_background Frame("phone_send_frame.png", 23, 23, 23, 23)
+
+style phone_choice_text:
+    xalign 0.5
+    text_align 0.5
+    color "#000"
+    hover_color "#FFF"
